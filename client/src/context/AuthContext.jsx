@@ -27,7 +27,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/auth/me");
+      const response = await axios.get("/api/auth/me");
       setUser(response.data.data);
     } catch (error) {
       console.error("Error fetching user:", error);
@@ -39,13 +39,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
-        {
-          email,
-          password,
-        },
-      );
+      const response = await axios.post("/api/auth/login", {
+        email,
+        password,
+      });
 
       const { token: newToken, user: userData } = response.data;
 
@@ -64,34 +61,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/register",
-        {
-          name,
-          email,
-          password,
-        },
-      );
-
-      const { token: newToken, user: userData } = response.data;
-
-      localStorage.setItem("token", newToken);
-      setToken(newToken);
-      setUser(userData);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-
-      return { success: true };
-    } catch (error) {
-      console.error("Register error:", error);
-      return {
-        success: false,
-        error: error.response?.data?.error || "Registration failed",
-      };
-    }
-  };
-
   const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
@@ -99,13 +68,42 @@ export const AuthProvider = ({ children }) => {
     delete axios.defaults.headers.common["Authorization"];
   };
 
+  const isAdmin = () => {
+    return user?.role?.name === "TrivixamCrmAdmin";
+  };
+
+  const isChildAdmin = () => {
+    return user?.role?.name === "TrivixamCrmChildAdmin";
+  };
+
+  const hasRole = (roleName) => {
+    return user?.role?.name === roleName;
+  };
+
+  const hasPermission = (permission) => {
+    return user?.role?.permissions?.includes(permission) || false;
+  };
+
+  const getRoleLevel = () => {
+    return user?.role?.level || 0;
+  };
+
+  const getRoleDisplayName = () => {
+    return user?.role?.displayName || "Unknown Role";
+  };
+
   const value = {
     user,
     token,
     loading,
     login,
-    register,
     logout,
+    isAdmin,
+    isChildAdmin,
+    hasRole,
+    hasPermission,
+    getRoleLevel,
+    getRoleDisplayName,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
